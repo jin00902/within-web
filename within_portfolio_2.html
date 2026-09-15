@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>김진영 · Within · 결 — 역할을 내려놓고 자신을 찾는 여정</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;900&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ───────────────────────────── RESET & BASE */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --ink:    #1E1C1A;
+  --paper:  #F2EDE4;
+  --gold:   #B8894A;
+  --fog:    #C8C0B4;
+  --mid:    #4A4540;
+  --pale:   #EDE8DF;
+  --rust:   #7A3828;
+  --white:  #FAF8F4;
+  --serif:  'Noto Serif KR', Georgia, serif;
+  --sans:   'Noto Sans KR', system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--serif);
+  font-weight: 300;
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ───────────────────────────── LAYOUT UTILITY */
+.wrap { max-width: 680px; margin: 0 auto; padding: 0 28px; }
+.wide { max-width: 900px; margin: 0 auto; padding: 0 28px; }
+
+/* ───────────────────────────── HERO */
+.hero {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 min(9vw, 80px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 나이테 SVG 배경 */
+.hero-ring {
+  position: absolute;
+  top: 50%;
+  right: -18vw;
+  transform: translateY(-50%);
+  width: min(70vw, 580px);
+  height: min(70vw, 580px);
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+.hero-eyebrow {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  margin-bottom: 2rem;
+}
+
+.hero-headline {
+  font-size: clamp(2.4rem, 6.5vw, 5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--paper);
+  margin-bottom: 1.4rem;
+}
+
+.hero-headline .line2 {
+  color: var(--gold);
+}
+
+.hero-sub {
+  font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+  color: var(--fog);
+  max-width: 480px;
+  line-height: 2;
+  margin-bottom: 3rem;
+}
+
+.hero-scroll {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--fog);
+  letter-spacing: 0.12em;
+}
+
+.hero-scroll::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.5;
+}
+
+/* ───────────────────────────── DIVIDER */
+.rule {
+  width: 40px;
+  height: 2px;
+  background: var(--gold);
+  margin: 0 0 2rem;
+}
+
+/* ───────────────────────────── SECTION SHARED */
+section { padding: min(10vw, 100px) 0; }
+
+.section-label {
+  font-family: var(--sans);
+  font-size: 0.62rem;
+  font-weight: 400;
+  letter-spacing: 0.28em;
+  color: var(--gold);
+  margin-bottom: 1.4rem;
+  display: block;
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 600;
+  color: var(--paper);
+  line-height: 1.35;
+  margin-bottom: 1.8rem;
+}
+
+.body-text {
+  font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+  color: var(--fog);
+  line-height: 2;
+  margin-bottom: 1.4rem;
+}
+
+.body-text strong {
+  color: var(--paper);
+  font-weight: 400;
+}
+
+.body-text em {
+  color: var(--gold);
+  font-style: normal;
+}
+
+/* ───────────────────────────── TURNING POINT */
+.turning {
+  background: linear-gradient(160deg, #181614 0%, #221E1A 100%);
+  border-top: 1px solid #2E2924;
+  border-bottom: 1px solid #2E2924;
+}
+
+.pull-quote {
+  font-size: clamp(1.1rem, 2.8vw, 1.7rem);
+  font-weight: 300;
+  color: var(--paper);
+  line-height: 1.85;
+  border-left: 3px solid var(--gold);
+  padding-left: 1.6rem;
+  margin: 2.5rem 0;
+}
+
+.pull-quote strong {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* ───────────────────────────── TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+}
+
+.tl-item {
+  position: relative;
+  margin-bottom: 2.2rem;
+}
+
+.tl-item::before {
+  content: '';
+  position: absolute;
+  left: -2.4rem;
+  top: 0.42rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--ink);
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
+.tl-year {
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.3rem;
+}
+
+.tl-text {
+  font-size: 0.92rem;
+  color: var(--fog);
+  line-height: 1.85;
+}
+
+.tl-text strong { color: var(--paper); font-weight: 400; }
+
+/* ───────────────────────────── WHY WITHIN */
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+  margin-top: 2.4rem;
+}
+
+@media (max-width: 600px) { .why-grid { grid-template-columns: 1fr; } }
+
+.why-card {
+  border: 1px solid #2E2924;
+  padding: 1.8rem;
+  position: relative;
+}
+
+.why-card::before {
+  content: attr(data-num);
+  position: absolute;
+  top: 1.2rem;
+  right: 1.4rem;
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  color: #3A3530;
+  letter-spacing: 0.1em;
+}
+
+.why-card-head {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--paper);
+  margin-bottom: 0.7rem;
+  line-height: 1.5;
+}
+
+.why-card-body {
+  font-size: 0.84rem;
+  color: var(--fog);
+  line-height: 1.9;
+}
+
+/* ───────────────────────────── FOR YOU */
+.for-you {
+  background: #161412;
+}
+
+.for-you-list {
+  list-style: none;
+  margin-top: 2rem;
+}
+
+.for-you-list li {
+  font-size: clamp(0.92rem, 1.6vw, 1.05rem);
+  color: var(--fog);
+  line-height: 1.85;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid #2A2622;
+  padding-left: 1.4rem;
+  position: relative;
+}
+
+.for-you-list li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 300;
+}
+
+.for-you-list li strong { color: var(--paper); font-weight: 400; }
+
+/* ───────────────────────────── SCIENCE STRIP */
+.science {
+  border-top: 1px solid #2A2622;
+  border-bottom: 1px solid #2A2622;
+  padding: 3rem 0;
+}
+
+.sci-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 3rem;
+}
+
+@media (max-width: 640px) { .sci-inner { flex-direction: column; gap: 1.8rem; } }
+
+.sci-badge {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-size: 0.6rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.sci-text {
+  font-size: 0.88rem;
+  color: var(--fog);
+  line-height: 1.95;
+}
+
+.sci-text strong { color: var(--paper); font-weight: 400; }
+
+/* ───────────────────────────── CTA */
+.cta-section {
+  text-align: center;
+  padding: min(12vw, 120px) 0 min(14vw, 140px);
+}
+
+.cta-eyebrow {
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  color: var(--gold);
+  letter-spacing: 0.25em;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.cta-headline {
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  font-weight: 600;
+  color: var(--paper);
+  line-height: 1.3;
+  margin-bottom: 1.2rem;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-desc {
+  font-size: 0.92rem;
+  color: var(--fog);
+  line-height: 1.95;
+  max-width: 400px;
+  margin: 0 auto 3rem;
+}
+
+.cta-btn {
+  display: inline-block;
+  text-decoration: none;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 1.1rem 2.6rem;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cta-btn:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.cta-btn--ghost {
+  background: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
+
+.cta-btn--ghost:hover {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.cta-note {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.7rem;
+  color: #5A5450;
+  margin-top: 1.4rem;
+  letter-spacing: 0.06em;
+}
+
+/* ───────────────────────────── FOOTER */
+footer {
+  border-top: 1px solid #252220;
+  padding: 2.4rem 0;
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-brand {
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.15em;
+}
+
+.footer-copy {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  color: #46423E;
+}
+
+/* ───────────────────────────── MOTION — subtle single entrance */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.65s ease, transform 0.65s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ HERO -->
+<div class="hero">
+
+  <!-- 나이테 SVG -->
+  <svg class="hero-ring" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="200" cy="200" r="30"  stroke="#B8894A" stroke-width="0.8"/>
+    <circle cx="200" cy="200" r="58"  stroke="#B8894A" stroke-width="0.7"/>
+    <circle cx="200" cy="200" r="88"  stroke="#B8894A" stroke-width="0.9"/>
+    <circle cx="200" cy="200" r="116" stroke="#B8894A" stroke-width="0.6"/>
+    <circle cx="200" cy="200" r="146" stroke="#B8894A" stroke-width="1"/>
+    <circle cx="200" cy="200" r="174" stroke="#B8894A" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="200" stroke="#B8894A" stroke-width="0.8"/>
+    <circle cx="200" cy="200" r="224" stroke="#B8894A" stroke-width="0.5"/>
+    <circle cx="200" cy="200" r="250" stroke="#B8894A" stroke-width="0.7"/>
+  </svg>
+
+  <div class="wrap">
+    <p class="hero-eyebrow">WITHIN · 결 · 김진영</p>
+
+    <h1 class="hero-headline">
+      역할이 나를<br>
+      <span class="line2">잡아먹던 날들이<br>있었습니다.</span>
+    </h1>
+
+    <p class="hero-sub">
+      공학박사, 광역의원, 정당 대변인.<br>
+      사람들이 원하는 것들을 가졌습니다.<br>
+      그런데 어느 순간 — 내가 없었습니다.
+    </p>
+
+    <div class="hero-scroll">스크롤해서 계속 읽기</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ TURNING POINT -->
+<section class="turning">
+  <div class="wrap fade-in">
+    <span class="section-label">계기</span>
+
+    <h2 class="section-title">
+      좌절이 질문을<br>만들었습니다
+    </h2>
+
+    <p class="body-text">
+      2018년 광역의원 재공천에서 탈락했습니다. 당선됐어도 불확실했을 그해였지만, 저는 그것보다 더 이상한 감각을 느꼈습니다 — <strong>잘려나간 것이 나인지, 역할인지 구분이 안 됐다</strong>는 것입니다.
+    </p>
+
+    <p class="body-text">
+      늦둥이가 태어났습니다. 다시 달리고 싶었습니다. 코로나라는 전환기에 "이번엔 내가 잘 할 수 있겠다"는 확신으로 구청장 경선에 뛰어들었습니다. 이후 청산 작업, 총리실 제안, 대통령실을 향한 바람 — 그리고 또 좌절.
+    </p>
+
+    <div class="pull-quote">
+      돌아보니 <strong>사건은 매번 달랐는데</strong><br>
+      나는 같은 패턴을 반복하고 있었습니다.<br>
+      원할수록, 막힐수록, 더 세게 달려드는.
+    </div>
+
+    <p class="body-text">
+      신경과학 언어로 말하면 이것은 의지 박약이 아닙니다. <em>역할이 예측 오류를 줄여주는 가장 빠른 방법이기 때문에</em>, 뇌가 역할을 놓지 않으려 한 것입니다. 그 사실을 알게 된 순간, 처음으로 물음이 바뀌었습니다.
+    </p>
+
+    <p class="body-text">
+      "왜 나는 실패했는가"가 아니라 — <strong>"나는 왜 그토록 그 역할을 원했는가."</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ TIMELINE -->
+<section>
+  <div class="wrap fade-in">
+    <span class="section-label">걸어온 길</span>
+    <h2 class="section-title">버릴수록 더 선명해진 것들</h2>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-year">기초의원 → 광역의원</div>
+        <div class="tl-text">구의원으로 시작해 부산시의회 광역의원까지. 정당 대변인, 정책 후보. <strong>역할이 쌓일수록 나는 더 작아졌습니다.</strong></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">공천 탈락 · 늦둥이 · 재도전</div>
+        <div class="tl-text">잘리고, 다시 달려들고, 착각하고, 막혔습니다. <strong>그 반복 속에서 처음으로 패턴이 보이기 시작했습니다.</strong></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">내면소통 수련 · Within 시작</div>
+        <div class="tl-text">김주환 교수의 내면소통 과정을 만났습니다. 뇌과학이 내가 겪은 것을 설명했습니다. <strong>아직 수련 중입니다. 그것이 이 브랜드의 첫 번째 진실입니다.</strong></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-year">지금 · Within · 결</div>
+        <div class="tl-text">역할이 아니라 <em>결(結)로</em> 자신을 보는 법. 나이테처럼 — 어떤 환경에서 자라도 지워지지 않는 고유한 무늬가 있습니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ WHY WITHIN -->
+<section style="background:#161412; border-top:1px solid #252220; border-bottom:1px solid #252220;">
+  <div class="wrap fade-in">
+    <span class="section-label">Within · 결이 다른 이유</span>
+    <h2 class="section-title">완성된 전문가가<br>아니기 때문입니다</h2>
+
+    <p class="body-text">
+      시중에는 "다 된 사람"이 가르치는 과정이 많습니다. Within은 다릅니다. <strong>지금도 같은 질문을 하고 있는 사람</strong>이, 그 과정에서 발견한 것을 나눕니다.
+    </p>
+
+    <div class="why-grid">
+      <div class="why-card" data-num="01">
+        <div class="why-card-head">실제로 겪었습니다</div>
+        <div class="why-card-body">20년 정치를 했고, 공천에서 잘렸고, 착각했고, 좌절했습니다. 이것이 콘텐츠의 재료가 아니라 출발점입니다.</div>
+      </div>
+      <div class="why-card" data-num="02">
+        <div class="why-card-head">과학이 뒷받침합니다</div>
+        <div class="why-card-body">김주환 교수(연세대 언론홍보영상학부)와 칼 프리스턴의 능동적 추론 이론이 경험을 설명하는 언어가 됐습니다. 느낌이 아닌 기제입니다.</div>
+      </div>
+      <div class="why-card" data-num="03">
+        <div class="why-card-head">아직 수련 중입니다</div>
+        <div class="why-card-body">내면소통 지도자 과정을 현재 진행 중입니다. "다 됐다"고 말하는 사람보다 "지금 여기에 있다"는 사람이 더 믿을 수 있습니다.</div>
+      </div>
+      <div class="why-card" data-num="04">
+        <div class="why-card-head">독창적 프로토콜</div>
+        <div class="why-card-body">셀프토크 + 일상 감각 채널을 결합한 5단계 자기적용 프로토콜. 치료실이 아니라 일상 속에서 씁니다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ FOR YOU -->
+<section class="for-you">
+  <div class="wrap fade-in">
+    <span class="section-label">이런 분께 닿길 바랍니다</span>
+    <h2 class="section-title">당신의 이야기가<br>여기 있습니다</h2>
+
+    <ul class="for-you-list">
+      <li><strong>오래 달렸는데 멈추는 법을 모르겠습니다.</strong> 잠깐 쉬려 하면 불안이 옵니다.</li>
+      <li><strong>명함이 바뀌면 내가 누군지 모르겠습니다.</strong> 직함 없는 나는 낯섭니다.</li>
+      <li><strong>내면을 들여다보고 싶은데 어디서부터 시작해야 할지 모릅니다.</strong> 명상도 해봤지만 금방 포기했습니다.</li>
+      <li><strong>뭔가 의미 있는 걸 해야 한다는 압박은 있는데</strong>, 무엇인지는 모릅니다.</li>
+      <li><strong>육아, 돌봄, 공백 이후</strong> — 다시 사회로 나가고 싶은데 어디서부터인지 막막합니다.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ SCIENCE -->
+<section>
+  <div class="wrap fade-in">
+    <span class="section-label">이론적 토대</span>
+
+    <div class="science">
+      <div class="sci-inner">
+        <div class="sci-badge">뇌과학<br>기반</div>
+        <div class="sci-text">
+          Within의 셀프토크 프로토콜은 <strong>김주환 교수(연세대 언론홍보영상학부)의 두 논문</strong>에 기반합니다. 셀프토크가 뇌의 보상·동기 네트워크를 실제로 바꾼다는 fMRI 연구(2021), 그리고 칼 프리스턴의 능동적 추론 이론을 언어적 소통에 적용한 연구(2022). 과학이 경험을 설명하고, 경험이 과학을 살아냅니다.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ CTA -->
+<section class="cta-section">
+  <div class="wrap fade-in">
+    <span class="cta-eyebrow">WITHIN · 결 · 시작하기</span>
+
+    <h2 class="cta-headline">
+      결을 찾는 여정,<br>여기서 시작합니다
+    </h2>
+
+    <p class="cta-desc">
+      홈페이지에서 커리큘럼 전문을 만나고,<br>
+      뉴스레터로 수련의 흐름을 함께 따라갑니다.
+    </p>
+
+    <div class="cta-buttons">
+      <a class="cta-btn" href="https://withinlab.carrd.co" target="_blank" rel="noopener">
+        홈페이지 방문하기
+      </a>
+      <a class="cta-btn cta-btn--ghost" href="https://within.stibee.com" target="_blank" rel="noopener">
+        감각구독 뉴스레터
+      </a>
+    </div>
+
+    <span class="cta-note">뉴스레터는 무료입니다 · 언제든 구독 취소 가능</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ FOOTER -->
+<footer>
+  <div class="wide footer-inner">
+    <span class="footer-brand">WITHIN · 결 · 김진영</span>
+    <span class="footer-copy">busan · within-gyeol.notion.site</span>
+  </div>
+</footer>
+
+<!-- ───────────────────────────── SCROLL ANIMATION -->
+<script>
+(function() {
+  const els = document.querySelectorAll('.fade-in');
+  if (!els.length) return;
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  els.forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>
