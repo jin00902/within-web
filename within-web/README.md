@@ -46,3 +46,4 @@ git remote add origin https://github.com/<계정>/within-app.git
 git push -u origin main
 ```
 이후 Vercel에서 이 저장소를 Import 하면, 커밋할 때마다 자동 배포됩니다.
+.
