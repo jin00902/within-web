@@ -388,3 +388,23 @@ footer .links a:hover { color: var(--ink); }
   .translate { padding: 26px 22px; }
   .btn { padding: 14px 26px; font-size: 12.5px; }
 }
+
+
+/* ---------- 2026-09-18 가독성 보정 ---------- */
+:root {
+   --ink: #221e19;
+   --body: #3a342b;
+   --muted: #6b6052;
+   --light: #8a7e6a;
+   --faint: #877b67;
+   --rule: #ddd4be;
+   --rule-strong: #cdc2ac;
+}
+body { font-size: 16.5px; font-weight: 400; line-height: 1.95; }
+h1, h2, h3 { font-weight: 500; }
+.lead { font-size: 17px; line-height: 2; }
+.small { font-size: 14px; }
+.tiny { font-size: 12px; }
+@media (max-width: 720px) {
+   body { font-size: 16px; }
+}
