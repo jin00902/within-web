@@ -21,6 +21,7 @@ const STEPS: Step[] = [
 
 const STEP_SECONDS = 60;
 const TOTAL = STEPS.length * STEP_SECONDS;
+const SOUND_KEY = 'within.sound';
 
 function mmss(sec: number) {
   const m = Math.floor(sec / 60);
@@ -28,15 +29,101 @@ function mmss(sec: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/* ── 싱잉볼 — 오실레이터로 직접 합성합니다 (외부 음원 파일 없음) ───────── */
+
+let audioCtx: AudioContext | null = null;
+
+function playBowl(opts: { f0?: number; gain?: number; dur?: number } = {}) {
+  const f0 = opts.f0 ?? 210;
+  const peak = opts.gain ?? 0.26;
+  const dur = opts.dur ?? 9;
+
+  try {
+    const AC =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    if (!audioCtx) audioCtx = new AC();
+    if (audioCtx.state === 'suspended') void audioCtx.resume();
+
+    const ctx = audioCtx;
+    const t0 = ctx.currentTime + 0.02;
+
+    const out = ctx.createGain();
+    out.gain.value = peak;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 5200;
+    out.connect(lp);
+    lp.connect(ctx.destination);
+
+    // 싱잉볼의 배음은 정수배가 아닙니다 — 종·볼 특유의 비조화 배음비
+    const partials = [
+      { r: 1.0, a: 1.0, d: 1.0 },
+      { r: 2.76, a: 0.36, d: 0.6 },
+      { r: 5.4, a: 0.15, d: 0.38 },
+      { r: 8.93, a: 0.06, d: 0.24 },
+    ];
+
+    partials.forEach((p) => {
+      const beat = 0.45 + p.r * 0.22; // 아주 살짝 어긋난 쌍 — 울렁이는 맥놀이
+      [0, beat].forEach((off) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = f0 * p.r + off;
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(p.a * 0.5, t0 + 0.035);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur * p.d);
+        o.connect(g);
+        g.connect(out);
+        o.start(t0);
+        o.stop(t0 + dur * p.d + 0.1);
+      });
+    });
+
+    // 채가 볼에 닿는 순간의 짧은 숨소리
+    const len = Math.floor(ctx.sampleRate * 0.28);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1700;
+    bp.Q.value = 0.8;
+    const ng = ctx.createGain();
+    ng.gain.setValueAtTime(0.06, t0);
+    ng.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
+    src.connect(bp);
+    bp.connect(ng);
+    ng.connect(out);
+    src.start(t0);
+  } catch {
+    // 소리가 나지 않아도 타이머는 그대로 돕니다
+  }
+}
+
 export default function BreathTimer() {
   const [running, setRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
+  const [soundOn, setSoundOn] = useState(true);
   const tick = useRef<ReturnType<typeof setInterval> | null>(null);
+  const rang = useRef(false);
 
   const done = elapsed >= TOTAL;
   const stepIndex = Math.min(Math.floor(elapsed / STEP_SECONDS), STEPS.length - 1);
   const remaining = Math.max(TOTAL - elapsed, 0);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SOUND_KEY) === 'off') setSoundOn(false);
+    } catch {
+      /* 저장소를 못 읽어도 기본값으로 동작합니다 */
+    }
+  }, []);
 
   const clear = useCallback(() => {
     if (tick.current) {
@@ -62,6 +149,17 @@ export default function BreathTimer() {
     return clear;
   }, [running, clear]);
 
+  // 3분이 끝나면 더 낮고 긴 소리로 한 번
+  useEffect(() => {
+    if (!done) {
+      rang.current = false;
+      return;
+    }
+    if (rang.current) return;
+    rang.current = true;
+    if (soundOn) playBowl({ f0: 157.5, dur: 11, gain: 0.22 });
+  }, [done, soundOn]);
+
   // 들숨 3.6초 / 날숨 3.6초 — 느린 호흡 리듬으로 원이 열리고 닫힘
   useEffect(() => {
     if (!running) return;
@@ -76,6 +174,24 @@ export default function BreathTimer() {
     setRunning(false);
     setElapsed(0);
     setPhase('inhale');
+  };
+
+  const toggleRun = () => {
+    if (!running && soundOn) playBowl(); // 시작 — 한 번 울립니다
+    setRunning((r) => !r);
+  };
+
+  const toggleSound = () => {
+    setSoundOn((on) => {
+      const next = !on;
+      try {
+        localStorage.setItem(SOUND_KEY, next ? 'on' : 'off');
+      } catch {
+        /* 저장이 막혀 있어도 이번 방문 동안은 유지됩니다 */
+      }
+      if (next) playBowl({ gain: 0.18, dur: 6 }); // 켜면 한 번 들려드립니다
+      return next;
+    });
   };
 
   return (
@@ -104,7 +220,7 @@ export default function BreathTimer() {
 
       <div className="btn-row">
         {!done && (
-          <button type="button" className="btn btn-solid" onClick={() => setRunning((r) => !r)}>
+          <button type="button" className="btn btn-solid" onClick={toggleRun}>
             {running ? '잠시 멈춤' : elapsed > 0 ? '이어서' : '시작하기'}
           </button>
         )}
@@ -114,6 +230,28 @@ export default function BreathTimer() {
           </button>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={toggleSound}
+        aria-pressed={soundOn}
+        style={{
+          display: 'inline-block',
+          marginTop: 18,
+          padding: '4px 2px',
+          background: 'none',
+          border: 0,
+          font: 'inherit',
+          fontSize: 12.5,
+          letterSpacing: '0.06em',
+          color: 'var(--light)',
+          cursor: 'pointer',
+          textDecoration: 'underline',
+          textUnderlineOffset: 4,
+        }}
+      >
+        싱잉볼 소리 · {soundOn ? '켜짐' : '꺼짐'}
+      </button>
     </div>
   );
 }
