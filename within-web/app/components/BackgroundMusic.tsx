@@ -116,6 +116,14 @@ export default function BackgroundMusic() {
 
   useEffect(() => stopFade, [stopFade]);
 
+  // 재생이 실제로 시작된 순간을 기준으로 버튼과 음량을 맞춥니다.
+  // 백그라운드 탭에서는 play() 약속이 늦게 풀려, 이 신호가 없으면 0의 음량으로 흐를 수 있습니다.
+  const handlePlaying = () => {
+    setPlaying(true);
+    const el = audioRef.current;
+    if (el && el.volume < 0.005 && !fadeRef.current) fadeTo(targetVolume(), FADE_IN_MS);
+  };
+
   const toggle = () => {
     const el = audioRef.current;
     if (!el) return;
@@ -169,6 +177,7 @@ cursor:pointer;backdrop-filter:blur(8px);transition:color .25s ease,border-color
         src={SRC}
         loop
         preload="auto"
+        onPlaying={handlePlaying}
         onError={() => setBroken(true)}
         aria-hidden="true"
       />
