@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import BackgroundMusic from './components/BackgroundMusic';
 
 const SITE = 'WITHIN · 감각구독';
 const DESC =
@@ -35,11 +36,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <BackgroundMusic />
+      </body>
     </html>
   );
 }
