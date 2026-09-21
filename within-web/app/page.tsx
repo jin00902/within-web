@@ -276,20 +276,75 @@ export default function Home() {
 
         {/* ---------------- FOUNDER ---------------- */}
         <section className="tight">
+          <style
+            dangerouslySetInnerHTML={{
+              __html: `
+.fd-name{font-size:30px;line-height:1.5;letter-spacing:.24em;font-weight:500;margin-right:-.24em}
+.fd-roles{font-size:12.5px;line-height:2.1;letter-spacing:.05em;color:var(--light);margin:18px 0 0}
+.fd-body{font-size:17px;line-height:2.1;margin:0 auto;max-width:430px}
+.fd-body + .fd-body{margin-top:20px}
+.fd-track{position:relative;max-width:330px;margin:52px auto 0}
+.fd-rail{position:absolute;left:16%;right:16%;top:5px;height:1px;background:var(--rule-strong)}
+.fd-stops{position:relative;display:flex;justify-content:space-between}
+.fd-stops>div{display:flex;flex-direction:column;align-items:center;gap:13px;width:33.333%}
+.fd-stops i{display:block;width:9px;height:9px;border-radius:50%;
+background:var(--ivory);border:1px solid var(--rule-strong)}
+.fd-stops i.on{background:var(--ink);border-color:var(--ink);box-shadow:0 0 0 5px var(--ivory)}
+.fd-stops span{font-size:12px;letter-spacing:.16em;color:var(--light)}
+.fd-stops>div:last-child span{color:var(--ink)}
+.fd-caption{margin-top:16px}
+.fd-quote{margin:52px 0 0;font-size:19px;line-height:2;color:var(--ink);font-style:italic}
+@media (max-width:720px){
+.fd-name{font-size:25px;letter-spacing:.2em;margin-right:-.2em}
+.fd-body{font-size:16px}
+.fd-quote{font-size:17px;margin-top:44px}
+.fd-track{max-width:290px;margin-top:44px}
+}
+`,
+            }}
+          />
           <div className="wrap center">
             <p className="eyebrow">founder</p>
-            <h2>김진영</h2>
-            <p className="small" style={{ marginTop: 14 }}>
-              공학박사 · 교육자 · 정치 정책 경험 · 내면소통 전문가
+            <h2 className="fd-name">김진영</h2>
+            <p className="fd-roles">
+              공학박사 · 교육자 · 정책과 사회를 경험한 사람 · 내면소통 심화 수련중
             </p>
+
             <hr className="rule rule-spaced" />
-            <p className="lead">
-              공학적 사고와 교육, 사회와 인간에 대한 경험을 바탕으로
-              몸의 감각과 언어의 관계를 탐구합니다.
+
+            <p className="fd-body">
+              공학에서 복잡한 시스템을 이해하고, 교육과 정치에서 사람과 사회의 문제를
+              다뤄왔습니다.
             </p>
-            <p className="lead italic quiet">
-              배우며 나눕니다 — 감각을 언어로.
+            <p className="fd-body">
+              이제는 시선을 가장 가까운 곳, 사람의 몸과 마음으로 돌립니다.
             </p>
+
+            <div className="fd-track" aria-hidden="true">
+              <div className="fd-rail" />
+              <div className="fd-stops">
+                <div>
+                  <i />
+                  <span>시스템</span>
+                </div>
+                <div>
+                  <i />
+                  <span>사회</span>
+                </div>
+                <div>
+                  <i className="on" />
+                  <span>몸</span>
+                </div>
+              </div>
+            </div>
+            <p className="tiny fd-caption">시선이 옮겨온 자리</p>
+
+            <p className="fd-body" style={{ marginTop: 40 }}>
+              몸에서 일어나는 감각을 알아차리고, 그것을 자신의 언어로 이해할 수 있도록
+              돕습니다.
+            </p>
+
+            <p className="fd-quote">몸의 말을 번역하는 사람, 김진영.</p>
           </div>
         </section>
       </main>
