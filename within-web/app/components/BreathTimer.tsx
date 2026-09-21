@@ -33,7 +33,7 @@ function mmss(sec: number) {
 
 let audioCtx: AudioContext | null = null;
 
-function playBowl(opts: { f0?: number; gain?: number; dur?: number } = {}) {
+async function playBowl(opts: { f0?: number; gain?: number; dur?: number } = {}) {
   const f0 = opts.f0 ?? 210;
   const peak = opts.gain ?? 0.26;
   const dur = opts.dur ?? 9;
@@ -44,9 +44,20 @@ function playBowl(opts: { f0?: number; gain?: number; dur?: number } = {}) {
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return;
     if (!audioCtx) audioCtx = new AC();
-    if (audioCtx.state === 'suspended') void audioCtx.resume();
 
     const ctx = audioCtx;
+    // 브라우저가 오디오를 멈춰둔 상태에서는 시계(currentTime)가 흐르지 않습니다.
+    // 먼저 깨우고, 깨어난 뒤의 시각을 기준으로 소리를 예약해야 합니다.
+    // (이걸 기다리지 않으면 예약 시각이 이미 지나간 시점이 되어 소리 없이 끝납니다)
+    if (ctx.state !== 'running') {
+      try {
+        await ctx.resume();
+      } catch {
+        return;
+      }
+    }
+    if (ctx.state !== 'running') return;
+
     const t0 = ctx.currentTime + 0.02;
 
     const out = ctx.createGain();
@@ -157,7 +168,7 @@ export default function BreathTimer() {
     }
     if (rang.current) return;
     rang.current = true;
-    if (soundOn) playBowl({ f0: 157.5, dur: 11, gain: 0.22 });
+    if (soundOn) void playBowl({ f0: 157.5, dur: 11, gain: 0.22 });
   }, [done, soundOn]);
 
   // 들숨 3.6초 / 날숨 3.6초 — 느린 호흡 리듬으로 원이 열리고 닫힘
@@ -177,7 +188,7 @@ export default function BreathTimer() {
   };
 
   const toggleRun = () => {
-    if (!running && soundOn) playBowl(); // 시작 — 한 번 울립니다
+    if (!running && soundOn) void playBowl(); // 시작 — 한 번 울립니다
     setRunning((r) => !r);
   };
 
@@ -189,7 +200,7 @@ export default function BreathTimer() {
       } catch {
         /* 저장이 막혀 있어도 이번 방문 동안은 유지됩니다 */
       }
-      if (next) playBowl({ gain: 0.18, dur: 6 }); // 켜면 한 번 들려드립니다
+      if (next) void playBowl({ gain: 0.18, dur: 6 }); // 켜면 한 번 들려드립니다
       return next;
     });
   };
