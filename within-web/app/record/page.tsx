@@ -51,6 +51,8 @@ export default function RecordPage() {
 
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [authMsg, setAuthMsg] = useState('');
 
   const [draft, setDraft] = useState<Draft>(EMPTY);
@@ -61,6 +63,16 @@ export default function RecordPage() {
   const [saved, setSaved] = useState(false);
   const [formMsg, setFormMsg] = useState('');
   const [entries, setEntries] = useState<Entry[]>([]);
+
+  // 한 번 쓴 주소는 이 기기에 남겨둡니다. 매번 다시 치지 않게.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('within.email');
+      if (saved) setEmail(saved);
+    } catch {
+      // 저장이 막힌 브라우저에서도 화면은 그대로 동작합니다.
+    }
+  }, []);
 
   // 로그인 상태를 따라갑니다. 메일 링크로 돌아오면 여기서 세션이 잡힙니다.
   useEffect(() => {
@@ -105,10 +117,42 @@ export default function RecordPage() {
       options: { emailRedirectTo: `${window.location.origin}/record` },
     });
     if (error) {
-      setAuthMsg('지금은 링크를 보낼 수 없습니다. 잠시 후 다시 시도해 주세요.');
+      setAuthMsg('지금은 메일을 보낼 수 없습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
+    try {
+      localStorage.setItem('within.email', addr);
+    } catch {
+      // 저장에 실패해도 로그인 자체는 진행됩니다.
+    }
+    setCode('');
     setSent(true);
+  };
+
+  // 메일에 적힌 여섯 자리를 이 화면에서 바로 확인합니다.
+  // 앱 밖으로 나갔다 오지 않으므로 로그인이 이 앱에 남습니다.
+  const verifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabase) return;
+    const token = code.replace(/\D/g, '');
+    if (token.length !== 6) {
+      setAuthMsg('메일에 적힌 여섯 자리 숫자를 넣어주세요.');
+      return;
+    }
+    setVerifying(true);
+    setAuthMsg('');
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token,
+      type: 'email',
+    });
+    setVerifying(false);
+    if (error) {
+      setAuthMsg('숫자가 맞지 않거나 시간이 지났습니다. 다시 받아주세요.');
+      return;
+    }
+    setCode('');
+    setSent(false);
   };
 
   const set = (key: string, value: string) => setDraft((d) => ({ ...d, [key]: value }));
@@ -201,6 +245,14 @@ background:transparent;border:1px solid var(--rule-strong)}
 display:flex;gap:14px;align-items:baseline;font-size:15px}
 .rec-list time{flex:0 0 auto;font-size:12.5px;color:var(--light);font-variant-numeric:tabular-nums}
 .rec-list span{color:var(--ink)}
+.otp{width:100%;padding:14px 13px;font-family:inherit;font-size:30px;font-weight:500;
+letter-spacing:.42em;text-indent:.42em;text-align:center;color:var(--ink);
+font-variant-numeric:tabular-nums;background:var(--ivory-card);
+border:1px solid var(--rule-strong);border-radius:2px;outline:none}
+.otp:focus{border-color:var(--light)}
+.otp::placeholder{color:var(--faint);letter-spacing:.3em}
+.linky{background:none;border:0;padding:0;font:inherit;color:var(--light);
+text-decoration:underline;cursor:pointer}
 @media (max-width:560px){.rec-axis{grid-template-columns:1fr;gap:6px}}
 `,
         }}
@@ -223,10 +275,47 @@ display:flex;gap:14px;align-items:baseline;font-size:15px}
             매일의 감각을 한 줄씩 남기고, 4주 뒤 나만의 감각사전으로 묶습니다.
           </p>
           {sent ? (
-            <p className="small">
-              메일함을 확인해 주세요. 보내드린 링크를 누르면 이 화면으로 돌아와 바로 기록할 수 있습니다.
-              비밀번호는 없습니다.
-            </p>
+            <form onSubmit={verifyCode} style={{ marginTop: 26 }}>
+              <p className="small" style={{ marginBottom: 22 }}>
+                <b>{email}</b> 으로 보냈습니다.<br />
+                메일에 적힌 <b>여섯 자리 숫자</b>를 아래에 넣어주세요.
+              </p>
+              <div className="field">
+                <label htmlFor="rec-code">숫자 여섯 자리</label>
+                <input
+                  id="rec-code"
+                  className="otp"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  maxLength={6}
+                  placeholder="······"
+                  value={code}
+                  onChange={(ev) => setCode(ev.target.value.replace(/\D/g, '').slice(0, 6))}
+                />
+              </div>
+              <button type="submit" className="btn btn-solid" disabled={verifying}>
+                {verifying ? '확인 중…' : '들어가기'}
+              </button>
+              {authMsg && <p className="msg err">{authMsg}</p>}
+              <p className="tiny" style={{ marginTop: 18 }}>
+                한 번만 넣으면 됩니다. 다음부터는 바로 열립니다.
+              </p>
+              <p className="tiny" style={{ marginTop: 8 }}>
+                <button
+                  type="button"
+                  className="linky"
+                  onClick={() => {
+                    setSent(false);
+                    setCode('');
+                    setAuthMsg('');
+                  }}
+                >
+                  메일을 못 받았습니다 · 다시 보내기
+                </button>
+              </p>
+            </form>
           ) : (
             <form onSubmit={sendLink} style={{ marginTop: 26 }}>
               <div className="field">
@@ -242,11 +331,11 @@ display:flex;gap:14px;align-items:baseline;font-size:15px}
                 />
               </div>
               <button type="submit" className="btn btn-solid">
-                로그인 링크 받기
+                숫자 받기
               </button>
               {authMsg && <p className="msg err">{authMsg}</p>}
               <p className="tiny" style={{ marginTop: 18 }}>
-                비밀번호 없이, 메일로 온 링크로 들어옵니다.
+                비밀번호는 없습니다. 메일로 온 여섯 자리 숫자로 들어옵니다.
               </p>
             </form>
           )}
