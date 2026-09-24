@@ -3,15 +3,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AXES, getBrowserSupabase } from '@/lib/supabaseBrowser';
-import BodyMap, { type BodyMark } from '../components/BodyMap';
+import BodyMap, { labelFor, type BodyMark, type BodySide } from '../components/BodyMap';
 
 type Entry = {
   id: string;
   entry_date: string;
   headline: string;
   ax_intensity: number | null;
+  note: string | null;
   created_at: string;
 };
+
+type Mark = { entry_id: string; side: BodySide; region: string };
+type Term = { entry_id: string; axis: string; surface: string };
 
 type Draft = Record<string, string>;
 
@@ -58,6 +62,11 @@ export default function RecordPage() {
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [marks, setMarks] = useState<BodyMark[]>([]);
   const [recent, setRecent] = useState<Record<string, string[]>>({});
+  const [marksBy, setMarksBy] = useState<Record<string, Mark[]>>({});
+  const [termsBy, setTermsBy] = useState<Record<string, Term[]>>({});
+  const [open, setOpen] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [intensity, setIntensity] = useState(5);
   const [intensityTouched, setIntensityTouched] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -93,11 +102,21 @@ export default function RecordPage() {
     if (!supabase || !session) return;
     const { data } = await supabase
       .from('entries')
-      .select('id, entry_date, headline, ax_intensity, created_at')
+      .select('id, entry_date, headline, ax_intensity, note, created_at')
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(30);
     setEntries((data as Entry[]) || []);
+
+    const { data: mk } = await supabase
+      .from('body_marks')
+      .select('entry_id, side, region')
+      .limit(400);
+    const byMark: Record<string, Mark[]> = {};
+    ((mk as Mark[]) || []).forEach((r) => {
+      (byMark[r.entry_id] || (byMark[r.entry_id] = [])).push(r);
+    });
+    setMarksBy(byMark);
   }, [supabase, session]);
 
   // 내가 전에 쓴 말만 불러옵니다. 남의 말은 가져오지 않습니다.
@@ -105,15 +124,23 @@ export default function RecordPage() {
     if (!supabase || !session) return;
     const { data } = await supabase
       .from('entry_terms')
-      .select('axis, surface, created_at')
+      .select('entry_id, axis, surface, created_at')
       .order('created_at', { ascending: false })
-      .limit(300);
+      .limit(400);
+    const rows = (data as Term[]) || [];
+
     const by: Record<string, string[]> = {};
-    ((data as { axis: string; surface: string }[]) || []).forEach((r) => {
+    rows.forEach((r) => {
       const list = by[r.axis] || (by[r.axis] = []);
       if (list.length < 5 && !list.includes(r.surface)) list.push(r.surface);
     });
     setRecent(by);
+
+    const byEntry: Record<string, Term[]> = {};
+    rows.forEach((r) => {
+      (byEntry[r.entry_id] || (byEntry[r.entry_id] = [])).push(r);
+    });
+    setTermsBy(byEntry);
   }, [supabase, session]);
 
   useEffect(() => {
@@ -253,6 +280,25 @@ export default function RecordPage() {
     void loadTerms();
   };
 
+  // 부위 표시와 어휘 연결을 먼저 지우고 기록을 지웁니다.
+  // 데이터베이스의 cascade 설정에 의존하지 않도록 순서를 직접 둡니다.
+  const remove = async (id: string) => {
+    if (!supabase) return;
+    setRemoving(true);
+    await supabase.from('entry_terms').delete().eq('entry_id', id);
+    await supabase.from('body_marks').delete().eq('entry_id', id);
+    const { error } = await supabase.from('entries').delete().eq('id', id);
+    setRemoving(false);
+    if (error) {
+      setFormMsg('지우지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    setConfirming(null);
+    setOpen(null);
+    void loadEntries();
+    void loadTerms();
+  };
+
   const signOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -282,10 +328,31 @@ background:var(--ivory-card);border:1px solid var(--rule-strong);border-radius:2
 background:transparent;border:1px solid var(--rule-strong)}
 .rec-week i.on{background:var(--ink);border-color:var(--ink)}
 .rec-list{border-top:1px solid var(--rule);margin-top:14px}
-.rec-list li{list-style:none;border-bottom:1px solid var(--rule);padding-block:14px;
-display:flex;gap:14px;align-items:baseline;font-size:15px}
-.rec-list time{flex:0 0 auto;font-size:12.5px;color:var(--light);font-variant-numeric:tabular-nums}
-.rec-list span{color:var(--ink)}
+.rec-list li{list-style:none;border-bottom:1px solid var(--rule)}
+.rec-row{width:100%;appearance:none;background:none;border:0;cursor:pointer;
+padding:14px 0;text-align:left;font-family:inherit;font-size:15px;
+display:flex;gap:14px;align-items:baseline}
+.rec-row time{flex:0 0 auto;font-size:12.5px;color:var(--light);font-variant-numeric:tabular-nums}
+.rec-row span{color:var(--ink);flex:1 1 auto}
+.rec-row i{flex:0 0 auto;width:7px;height:7px;margin-top:5px;border-right:1px solid var(--rule-strong);
+border-bottom:1px solid var(--rule-strong);transform:rotate(45deg);transition:transform .2s}
+.rec-row i.on{transform:rotate(-135deg)}
+.rec-row:hover span{color:var(--light)}
+.rec-detail{padding:2px 0 18px 0;display:grid;gap:7px}
+.rec-detail p{margin:0;font-size:14px;line-height:1.75;color:var(--ink)}
+.rec-detail b{display:inline-block;min-width:66px;font-weight:400;font-size:11.5px;
+letter-spacing:.14em;color:var(--light)}
+.rec-detail .rec-bare{color:var(--faint);font-size:13px}
+.rec-detail .rec-del{margin-top:9px;font-size:12.5px;color:var(--faint)}
+.slider-row input[type=range]{-webkit-appearance:none;appearance:none;width:100%;
+height:1px;background:var(--rule-strong);outline:none;margin:0;padding:0;border:0}
+.slider-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+width:15px;height:15px;border-radius:50%;background:var(--ivory-card);
+border:1px solid var(--ink);cursor:pointer}
+.slider-row input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;
+background:var(--ivory-card);border:1px solid var(--ink);cursor:pointer}
+.slider-row input[type=range]::-moz-range-track{height:1px;background:var(--rule-strong);border:0}
+.slider-row input[type=range]:focus-visible::-webkit-slider-thumb{box-shadow:0 0 0 3px var(--rule)}
 .rec-cell{min-width:0}
 .rec-recent{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
 .rec-recent button{appearance:none;background:transparent;cursor:pointer;
@@ -513,12 +580,98 @@ text-decoration:underline;cursor:pointer}
             <div style={{ marginTop: 56 }}>
               <p className="eyebrow">지난 기록</p>
               <ul className="rec-list" style={{ padding: 0, margin: 0 }}>
-                {entries.slice(0, 8).map((x) => (
-                  <li key={x.id}>
-                    <time dateTime={x.entry_date}>{x.entry_date.slice(5).replace('-', '.')}</time>
-                    <span>{x.headline}</span>
-                  </li>
-                ))}
+                {entries.slice(0, 12).map((x) => {
+                  const isOpen = open === x.id;
+                  const mk = marksBy[x.id] || [];
+                  const tm = termsBy[x.id] || [];
+                  return (
+                    <li key={x.id}>
+                      <button
+                        type="button"
+                        className="rec-row"
+                        aria-expanded={isOpen}
+                        onClick={() => {
+                          setOpen(isOpen ? null : x.id);
+                          setConfirming(null);
+                        }}
+                      >
+                        <time dateTime={x.entry_date}>
+                          {x.entry_date.slice(5).replace('-', '.')}
+                        </time>
+                        <span>{x.headline}</span>
+                        <i className={isOpen ? 'on' : ''} aria-hidden="true" />
+                      </button>
+
+                      {isOpen && (
+                        <div className="rec-detail">
+                          {mk.length > 0 && (
+                            <p>
+                              <b>부위</b>
+                              {mk.map((m) => labelFor(m.side, m.region)).join(' · ')}
+                            </p>
+                          )}
+                          {x.ax_intensity != null && (
+                            <p>
+                              <b>강도</b>
+                              {x.ax_intensity} / 10
+                            </p>
+                          )}
+                          {AXES.map((a) => {
+                            const words = tm.filter((t) => t.axis === a.key).map((t) => t.surface);
+                            if (words.length === 0) return null;
+                            return (
+                              <p key={a.key}>
+                                <b>{a.label}</b>
+                                {words.join(' · ')}
+                              </p>
+                            );
+                          })}
+                          {x.note && (
+                            <p>
+                              <b>메모</b>
+                              {x.note}
+                            </p>
+                          )}
+                          {mk.length === 0 && tm.length === 0 && !x.note && x.ax_intensity == null && (
+                            <p className="rec-bare">한 줄만 남기신 날입니다.</p>
+                          )}
+
+                          <p className="rec-del">
+                            {confirming === x.id ? (
+                              <>
+                                정말 지울까요? 되돌릴 수 없습니다.{' '}
+                                <button
+                                  type="button"
+                                  className="linky"
+                                  disabled={removing}
+                                  onClick={() => void remove(x.id)}
+                                >
+                                  {removing ? '지우는 중…' : '지웁니다'}
+                                </button>
+                                {' · '}
+                                <button
+                                  type="button"
+                                  className="linky"
+                                  onClick={() => setConfirming(null)}
+                                >
+                                  아니요
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                className="linky"
+                                onClick={() => setConfirming(x.id)}
+                              >
+                                이 기록 지우기
+                              </button>
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
