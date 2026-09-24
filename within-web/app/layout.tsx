@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', title: SITE, description: DESC },
   robots: { index: true, follow: true },
+  // 홈 화면에 추가했을 때 앱처럼 열리게 합니다 (스토어 없이)
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'WITHIN' },
+  applicationName: 'WITHIN',
 };
 
 export const viewport: Viewport = {
