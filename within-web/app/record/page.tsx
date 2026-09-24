@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AXES, getBrowserSupabase } from '@/lib/supabaseBrowser';
+import BodyMap, { type BodyMark } from '../components/BodyMap';
 
 type Entry = {
   id: string;
@@ -53,6 +54,7 @@ export default function RecordPage() {
   const [authMsg, setAuthMsg] = useState('');
 
   const [draft, setDraft] = useState<Draft>(EMPTY);
+  const [marks, setMarks] = useState<BodyMark[]>([]);
   const [intensity, setIntensity] = useState(5);
   const [intensityTouched, setIntensityTouched] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -133,13 +135,33 @@ export default function RecordPage() {
       row[a.key] = draft[a.key].trim() || null;
     });
 
-    const { error } = await supabase.from('entries').insert(row);
+    const { data: created, error } = await supabase
+      .from('entries')
+      .insert(row)
+      .select('id')
+      .single();
+
+    // 부위 표시는 기록이 만들어진 뒤에 붙습니다. 실패해도 기록 자체는 남습니다.
+    if (!error && created && marks.length > 0) {
+      await supabase.from('body_marks').insert(
+        marks.map((m) => ({
+          entry_id: created.id,
+          user_id: session.user.id,
+          side: m.side,
+          region: m.region,
+          x: m.x,
+          y: m.y,
+        })),
+      );
+    }
+
     setSaving(false);
     if (error) {
       setFormMsg('저장하지 못했습니다. 잠시 후 다시 눌러주세요.');
       return;
     }
     setDraft(EMPTY);
+    setMarks([]);
     setIntensity(5);
     setIntensityTouched(false);
     setSaved(true);
@@ -268,7 +290,12 @@ display:flex;gap:14px;align-items:baseline;font-size:15px}
                 />
               </div>
 
-              <p className="tiny" style={{ margin: '26px 0 14px' }}>
+              <p className="tiny" style={{ margin: '30px 0 0' }}>
+                몸의 어디였습니까 — 여러 곳을 골라도 됩니다
+              </p>
+              <BodyMap value={marks} onChange={setMarks} />
+
+              <p className="tiny" style={{ margin: '30px 0 14px' }}>
                 여덟 개 축으로 풀어보기 — 비워두셔도 됩니다
               </p>
 
