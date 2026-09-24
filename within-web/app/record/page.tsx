@@ -57,6 +57,7 @@ export default function RecordPage() {
 
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [marks, setMarks] = useState<BodyMark[]>([]);
+  const [recent, setRecent] = useState<Record<string, string[]>>({});
   const [intensity, setIntensity] = useState(5);
   const [intensityTouched, setIntensityTouched] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -99,9 +100,26 @@ export default function RecordPage() {
     setEntries((data as Entry[]) || []);
   }, [supabase, session]);
 
+  // 내가 전에 쓴 말만 불러옵니다. 남의 말은 가져오지 않습니다.
+  const loadTerms = useCallback(async () => {
+    if (!supabase || !session) return;
+    const { data } = await supabase
+      .from('entry_terms')
+      .select('axis, surface, created_at')
+      .order('created_at', { ascending: false })
+      .limit(300);
+    const by: Record<string, string[]> = {};
+    ((data as { axis: string; surface: string }[]) || []).forEach((r) => {
+      const list = by[r.axis] || (by[r.axis] = []);
+      if (list.length < 5 && !list.includes(r.surface)) list.push(r.surface);
+    });
+    setRecent(by);
+  }, [supabase, session]);
+
   useEffect(() => {
     void loadEntries();
-  }, [loadEntries]);
+    void loadTerms();
+  }, [loadEntries, loadTerms]);
 
   const sendLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,6 +217,28 @@ export default function RecordPage() {
       );
     }
 
+    // 축마다 적은 말을 사전에 올립니다. 쉼표·가운뎃점·빗금으로 나눈 것만 나눕니다.
+    if (!error && created) {
+      const terms: { axis: string; surface: string }[] = [];
+      AXES.forEach((a) => {
+        draft[a.key]
+          .split(/[,·/]/)
+          .map((x) => x.trim())
+          .filter(Boolean)
+          .forEach((surface) => terms.push({ axis: a.key, surface }));
+      });
+      if (terms.length > 0) {
+        await supabase.from('entry_terms').insert(
+          terms.map((t) => ({
+            entry_id: created.id,
+            user_id: session.user.id,
+            axis: t.axis,
+            surface: t.surface,
+          })),
+        );
+      }
+    }
+
     setSaving(false);
     if (error) {
       setFormMsg('저장하지 못했습니다. 잠시 후 다시 눌러주세요.');
@@ -210,6 +250,7 @@ export default function RecordPage() {
     setIntensityTouched(false);
     setSaved(true);
     void loadEntries();
+    void loadTerms();
   };
 
   const signOut = async () => {
@@ -245,6 +286,13 @@ background:transparent;border:1px solid var(--rule-strong)}
 display:flex;gap:14px;align-items:baseline;font-size:15px}
 .rec-list time{flex:0 0 auto;font-size:12.5px;color:var(--light);font-variant-numeric:tabular-nums}
 .rec-list span{color:var(--ink)}
+.rec-cell{min-width:0}
+.rec-recent{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.rec-recent button{appearance:none;background:transparent;cursor:pointer;
+border:1px solid var(--rule);border-radius:999px;padding:3px 10px;
+font-family:inherit;font-size:12px;color:var(--faint);
+transition:color .2s,border-color .2s}
+.rec-recent button:hover{color:var(--ink);border-color:var(--rule-strong)}
 .otp{width:100%;padding:14px 13px;font-family:inherit;font-size:30px;font-weight:500;
 letter-spacing:.42em;text-indent:.42em;text-align:center;color:var(--ink);
 font-variant-numeric:tabular-nums;background:var(--ivory-card);
@@ -386,6 +434,12 @@ text-decoration:underline;cursor:pointer}
 
               <p className="tiny" style={{ margin: '30px 0 14px' }}>
                 여덟 개 축으로 풀어보기 — 비워두셔도 됩니다
+                {Object.keys(recent).length > 0 && (
+                  <>
+                    <br />
+                    아래 작은 말들은 전에 내가 쓴 말입니다. 오늘의 말이 따로 있다면 그것을 적으세요.
+                  </>
+                )}
               </p>
 
               <div className="rec-axes">
@@ -413,13 +467,24 @@ text-decoration:underline;cursor:pointer}
                 {AXES.map((a) => (
                   <div className="rec-axis" key={a.key}>
                     <label htmlFor={`rec-${a.key}`}>{a.label}</label>
-                    <input
-                      id={`rec-${a.key}`}
-                      type="text"
-                      placeholder={a.hint}
-                      value={draft[a.key]}
-                      onChange={(ev) => set(a.key, ev.target.value)}
-                    />
+                    <div className="rec-cell">
+                      <input
+                        id={`rec-${a.key}`}
+                        type="text"
+                        placeholder={a.hint}
+                        value={draft[a.key]}
+                        onChange={(ev) => set(a.key, ev.target.value)}
+                      />
+                      {(recent[a.key] || []).length > 0 && (
+                        <div className="rec-recent">
+                          {(recent[a.key] || []).map((w) => (
+                            <button key={w} type="button" onClick={() => set(a.key, w)}>
+                              {w}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
