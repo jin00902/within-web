@@ -100,6 +100,15 @@ export default function RecordPage() {
 
   const loadEntries = useCallback(async () => {
     if (!supabase || !session) return;
+
+    // 토큰이 아직 살아 있는지 서버에 먼저 묻습니다.
+    // 끊긴 채로 조용히 빈 목록을 보여주면 기록이 사라진 것처럼 보입니다.
+    const { data: who, error: whoErr } = await supabase.auth.getUser();
+    if (whoErr || !who?.user) {
+      await supabase.auth.signOut();
+      return;
+    }
+
     const { data } = await supabase
       .from('entries')
       .select('id, entry_date, headline, ax_intensity, note, created_at')
